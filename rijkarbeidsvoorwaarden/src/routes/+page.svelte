@@ -55,7 +55,7 @@
 
 <!-- SVELTE CONCEPT: Everything outside <script> and <style> is your HTML template -->
 <div class="container">
-	<h1>Arbeidsvoorwaarden Rijksoverheid Calculator</h1>
+	<h1>Arbeidsvoorwaarden Rijksoverheid Vergelijken</h1>
 	<p class="subtitle">
 		Bij de Rijksoverheid bestaat de beloning uit een aantal verschillende onderdelen.
 		Hierdoor is het soms lastig om de beloning af te zetten tegen een bruto salaris in de private sector.
