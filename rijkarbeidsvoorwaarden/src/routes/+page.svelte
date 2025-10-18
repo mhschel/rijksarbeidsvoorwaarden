@@ -174,10 +174,12 @@
 	h1 {
 		color: #01689b;
 		margin-bottom: 1rem;
-		font-size: 2.5rem;
+		font-size: clamp(1.75rem, 5vw, 2.5rem);
 		font-weight: 700;
 		letter-spacing: -0.025em;
 		line-height: 1.2;
+		word-wrap: break-word;
+		hyphens: auto;
 	}
 
 	.subtitle {
