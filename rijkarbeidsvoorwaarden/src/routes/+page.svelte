@@ -97,10 +97,10 @@
 
 	<!-- Section 3: Pension Contribution -->
 	<div class="section">
-		<h2>Pensioenbijdrage</h2>
+		<h2>Pensioeninleg</h2>
 		<div class="section-content">
 			<div class="result-item">
-				<span class="label">Werkgeversbijdrage pensioen<sup class="footnote-ref">2</sup>:</span>
+				<span class="label">Pensioeninleg<sup class="footnote-ref">2</sup>:</span>
 				<span class="value">{formatCurrency(pension)}</span>
 			</div>
 		</div>
