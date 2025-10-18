@@ -59,8 +59,8 @@
 	<p class="subtitle">
 		Bij de Rijksoverheid bestaat de beloning uit een aantal verschillende onderdelen.
 		Hierdoor is het soms lastig om de beloning af te zetten tegen een bruto salaris in de private sector.
-		Deze onofficiële website helpt om inzicht te krijgen in de volledige beloning. 
-		Deze is gebaseerd op de <a href="https://ambtenarensalaris.nl/wp-content/uploads/2024/07/CAORijk2024-2025per1juli2024-versievastgesteld27juni2024.pdf">CAO Rijk 2024-2025</a>.
+		Deze onofficiële website helpt met vergelijken. 
+		Deze onderliggende informatie is afkomstig uit de <a href="https://ambtenarensalaris.nl/wp-content/uploads/2024/07/CAORijk2024-2025per1juli2024-versievastgesteld27juni2024.pdf">CAO Rijk 2024-2025</a>.
 	</p>
 
 	<!-- Input Section -->
