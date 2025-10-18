@@ -2,16 +2,33 @@
 	// SVELTE CONCEPT: <script> tag contains your JavaScript/TypeScript
 	// This runs when the component is created
 
+	import { page } from '$app/stores';
 	import { getAvailableSchalen, getAvailableTredes, getMonthlyCompensation } from '$lib/salaryData';
+
+	// Get URL parameters for schaal and trede (if provided)
+	// Example: ?schaal=12&trede=3
+	const urlSchaal = $page.url.searchParams.get('schaal');
+	const urlTrede = $page.url.searchParams.get('trede');
 
 	// SVELTE CONCEPT: These are "reactive variables"
 	// When they change, Svelte automatically updates the UI
-	let selectedSchaal = 11;  // Default to schaal 11
-	let selectedTrede = 5;    // Default to trede 5
+	// Use URL params if available, otherwise use defaults
+	let selectedSchaal = urlSchaal ? parseInt(urlSchaal) : 11;  // Default to schaal 11
+	let selectedTrede = urlTrede ? parseInt(urlTrede) : 5;    // Default to trede 5
 
 	// SVELTE CONCEPT: $: makes this a "reactive statement"
 	// It automatically recalculates when dependencies (selectedSchaal, selectedTrede) change
 	$: monthlyCompensation = getMonthlyCompensation(selectedSchaal, selectedTrede);
+
+	// Update URL when schaal or trede changes (for easy sharing)
+	$: {
+		if (typeof window !== 'undefined') {
+			const url = new URL(window.location.href);
+			url.searchParams.set('schaal', selectedSchaal.toString());
+			url.searchParams.set('trede', selectedTrede.toString());
+			window.history.replaceState({}, '', url);
+		}
+	}
 
 	// Calculate all compensation components based on the formulas in SPEC.md
 	$: yearlyPreTaxSalary = (monthlyCompensation * 0.919) * 12;
@@ -81,11 +98,11 @@
 		<h2>Bruto jaarsalaris (incl. IKB)</h2>
 		<div class="section-content">
 			<div class="result-item">
-				<span class="label">Bruto jaarsalaris<sup class="footnote-ref">2</sup>:</span>
+				<span class="label">Bruto jaarsalaris<sup class="footnote-ref">1</sup>:</span>
 				<span class="value">{formatCurrency(yearlyPreTaxSalary)}</span>
 			</div>
 			<div class="result-item">
-				<span class="label">IKB<sup class="footnote-ref">1</sup>:</span>
+				<span class="label">IKB<sup class="footnote-ref">2</sup>:</span>
 				<span class="value">{formatCurrency(preTaxTopup)}</span>
 			</div>
 			<div class="result-item total">
@@ -100,7 +117,7 @@
 		<h2>Pensioeninleg</h2>
 		<div class="section-content">
 			<div class="result-item">
-				<span class="label">Pensioeninleg<sup class="footnote-ref">2</sup>:</span>
+				<span class="label">Pensioeninleg<sup class="footnote-ref">1</sup>:</span>
 				<span class="value">{formatCurrency(pension)}</span>
 			</div>
 		</div>
@@ -126,12 +143,12 @@
 		<h3>Toelichting</h3>
 		<ol>
 			<li>
-				<strong>IKB (Individueel Keuzebudget):</strong> Het IKB is 16,5% van je bruto maandsalaris en kan je bijvoorbeeld gebruiken voor extra verlof of uitbetaling.
-				<a href="https://www.p-direkt.nl/informatie-rijkspersoneel-2020/financien/salaris/individueel-keuzebudget-ikb" target="_blank" rel="noopener">Meer info</a>
-			</li>
-			<li>
 				<strong>Pensioenbijdrage:</strong> De werkgeversbijdrage aan het ABP-pensioen bedraagt 27% van je bruto maandsalaris. Hiervan leg je een deel in uit het bruto salaris. 
 				<a href="https://www.abp.nl/pensioen-bij-abp/pensioenpremie-en-opbouw">Meer info</a>
+			</li>
+			<li>
+				<strong>IKB (Individueel Keuzebudget):</strong> Het IKB is 16,5% van je bruto maandsalaris en kan je bijvoorbeeld gebruiken voor extra verlof of uitbetaling.
+				<a href="https://www.p-direkt.nl/informatie-rijkspersoneel-2020/financien/salaris/individueel-keuzebudget-ikb" target="_blank" rel="noopener">Meer info</a>
 			</li>
 			<li>
 				<strong>Vierdaagse werkweek:</strong> Bij de Rijksoverheid zijn contracten doorgaans voor 36 uur per week. Werknemers hebben recht op '4x9' werken (4 dagen x 9 uur). Werknemers die 5 dagen werken bouwen compensatieverlof op, waardoor zij in totaal tot wel 11,5 weken per jaar verlof opbouwen.
