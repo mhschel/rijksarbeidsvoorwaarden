@@ -5,38 +5,46 @@
 	import { page } from '$app/stores';
 	import { getAvailableSchalen, getAvailableTredes, getMonthlyCompensation } from '$lib/salaryData';
 
-	// Get URL parameters for schaal and trede (if provided)
-	// Example: ?schaal=12&trede=3
+	// Get URL parameters for schaal, trede and hours (if provided)
+	// Example: ?schaal=12&trede=3&uren=40
 	const urlSchaal = $page.url.searchParams.get('schaal');
 	const urlTrede = $page.url.searchParams.get('trede');
+	const urlUren = $page.url.searchParams.get('uren');
 
 	// SVELTE CONCEPT: These are "reactive variables"
 	// When they change, Svelte automatically updates the UI
 	// Use URL params if available, otherwise use defaults
 	let selectedSchaal = urlSchaal ? parseInt(urlSchaal) : 11;  // Default to schaal 11
 	let selectedTrede = urlTrede ? parseInt(urlTrede) : 5;    // Default to trede 5
+	let selectedUren = urlUren ? parseInt(urlUren) : 36;      // Default to 36 hours
+
+	// Available hours options
+	const urenOptions = [27, 36, 38, 40];
 
 	// SVELTE CONCEPT: $: makes this a "reactive statement"
 	// It automatically recalculates when dependencies (selectedSchaal, selectedTrede) change
 	$: monthlyCompensation = getMonthlyCompensation(selectedSchaal, selectedTrede);
 
-	// Update URL when schaal or trede changes (for easy sharing)
+	// Update URL when schaal, trede or uren changes (for easy sharing)
 	$: {
 		if (typeof window !== 'undefined') {
 			const url = new URL(window.location.href);
 			url.searchParams.set('schaal', selectedSchaal.toString());
 			url.searchParams.set('trede', selectedTrede.toString());
+			url.searchParams.set('uren', selectedUren.toString());
 			window.history.replaceState({}, '', url);
 		}
 	}
 
-	// Calculate all compensation components based on the formulas in SPEC.md
-	$: yearlyPreTaxSalary = (monthlyCompensation * 0.919) * 12;
-	$: preTaxTopup = (monthlyCompensation * 0.165) * 12;
-	$: pretaxSalaryInclBenefits = yearlyPreTaxSalary + preTaxTopup;
-	$: pension = (monthlyCompensation * 0.27) * 12;
-	$: totalCompensation = yearlyPreTaxSalary + preTaxTopup + pension;
-	$: totalCompensation5Day = totalCompensation * (5 / 4);
+	$: scaleFactor = 12 * (selectedUren / 36);
+
+	$: yearlyPreTaxSalary = monthlyCompensation * scaleFactor;
+	$: individualPensionContribution = (monthlyCompensation * 0.081) * scaleFactor;
+	$: ikbBudget = (monthlyCompensation * 0.165) * scaleFactor;
+	$: pretaxSalaryInclBenefits = yearlyPreTaxSalary + ikbBudget - individualPensionContribution;
+	$: pensoenEmployer = (monthlyCompensation * (0.27 - 0.081)) * scaleFactor;
+	$: pension = individualPensionContribution + pensoenEmployer;
+	$: totalCompensation = pretaxSalaryInclBenefits + pension;
 
 	// Get available options for dropdowns
 	const schalen = getAvailableSchalen();
@@ -85,25 +93,38 @@
 				{/each}
 			</select>
 		</div>
+
+		<div class="input-group">
+			<label for="uren">Uren:</label>
+			<select id="uren" bind:value={selectedUren}>
+				{#each urenOptions as uren}
+					<option value={uren}>{uren}</option>
+				{/each}
+			</select>
+		</div>
 	</div>
 
 	<!-- Section 1: Monthly CAO Amount (Highlighted) -->
 	<div class="section">
-		<h2>Maandbedrag CAO Rijk</h2>
-		<div class="value">{formatCurrency(monthlyCompensation)}</div>
+		<h2>Maandbedrag CAO Rijk (geschaald naar aantal uren)<sup class="footnote-ref">1</sup></h2>
+		<div class="value">{formatCurrency(monthlyCompensation * (selectedUren / 36))}</div>
 	</div>
 
 	<!-- Section 2: Bruto Salary including IKB and Vakantiegeld -->
 	<div class="section">
-		<h2>Bruto jaarsalaris (incl. IKB)</h2>
+		<h2>Bruto jaarsalaris (incl. IKB)<sup class="footnote-ref">2</sup></h2>
 		<div class="section-content">
 			<div class="result-item">
-				<span class="label">Bruto jaarsalaris<sup class="footnote-ref">1</sup>:</span>
+				<span class="label">Bruto jaarsalaris:</span>
 				<span class="value">{formatCurrency(yearlyPreTaxSalary)}</span>
 			</div>
 			<div class="result-item">
-				<span class="label">IKB<sup class="footnote-ref">2</sup>:</span>
-				<span class="value">{formatCurrency(preTaxTopup)}</span>
+				<span class="label">Verplicht Eigen Inleg Pensioen:</span>
+				<span class="value">{formatCurrency(-1 * individualPensionContribution)}</span>
+			</div>
+			<div class="result-item">
+				<span class="label">IKB:</span>
+				<span class="value">{formatCurrency(ikbBudget)}</span>
 			</div>
 			<div class="result-item total">
 				<span class="label">Totaal:</span>
@@ -112,28 +133,38 @@
 		</div>
 	</div>
 
-	<!-- Section 3: Pension Contribution -->
 	<div class="section">
-		<h2>Pensioeninleg</h2>
+		<h2>Pensioeninleg<sup class="footnote-ref">3</sup></h2>
 		<div class="section-content">
 			<div class="result-item">
-				<span class="label">Pensioeninleg<sup class="footnote-ref">1</sup>:</span>
-				<span class="value">{formatCurrency(pension)}</span>
+				<span class="label">Verplicht Eigen Inleg Pensioen:</span>
+				<span class="value">{formatCurrency(individualPensionContribution)}</span>
 			</div>
+		</div>
+		<div class="section-content">
+			<div class="result-item">
+				<span class="label">Pensioeninleg Werkgever:</span>
+				<span class="value">{formatCurrency(pensoenEmployer)}</span>
+			</div>
+		</div>
+		<div class="section-content"></div>
+		<div class="result-item total">
+			<span class="label">Totaal:</span>
+			<span class="value">{formatCurrency(pension)}</span>
 		</div>
 	</div>
 
 	<!-- Section 4: Total Compensation -->
 	<div class="section final">
-		<h2>Totale beloning voor 4 dagen per week</h2>
+		<h2>Totale beloning voor {selectedUren} uur per week</h2>
 		<div class="section-content">
 			<div class="result-item total">
-				<span class="label">Totaal<sup class="footnote-ref">3</sup>:</span>
+				<span class="label">Totaal:</span>
 				<span class="value">{formatCurrency(totalCompensation)}</span>
 			</div>
 			<div class="result-item total">
-				<span class="label">Geschaald naar 5 daagse werkweek:</span>
-				<span class="value">{formatCurrency(totalCompensation5Day)}</span>
+				<span class="label">Beloning geschaald naar volledige werkweek (40 uur):</span>
+				<span class="value">{formatCurrency(totalCompensation * (40 / selectedUren))}</span>
 			</div>
 		</div>
 	</div>
@@ -143,16 +174,16 @@
 		<h3>Toelichting</h3>
 		<ol>
 			<li>
-				<strong>Pensioenbijdrage:</strong> De werkgeversbijdrage aan het ABP-pensioen bedraagt 27% van je bruto maandsalaris. Hiervan leg je een deel in uit het bruto salaris. 
-				<a href="https://www.abp.nl/pensioen-bij-abp/pensioenpremie-en-opbouw">Meer info</a>
+				Bij de Rijksoverheid zijn contracten doorgaans voor 36 uur per week. Werknemers hebben recht op '4x9' werken (4 dagen x 9 uur). Werknemers die 5x8 werken met een contract voor 36 uur bouwen compensatieverlof op, waardoor zij in totaal tot wel 11,5 weken per jaar verlof opbouwen. In overleg met de manager is het soms mogelijk om meer dan 36 uur te werken, namelijk 38 of 40 uur. Dan ontvangt de werknemer een hogere beloning en bouwt men geen compensatieverlof op.
+				<a href="https://www.p-direkt.nl/informatie-rijkspersoneel-2020/vrije-dagen/vakantie/compensatie-uren/compensatie-uren-opbouwen">Meer info</a>
 			</li>
 			<li>
-				<strong>IKB (Individueel Keuzebudget):</strong> Het IKB is 16,5% van je bruto maandsalaris en kan je bijvoorbeeld gebruiken voor extra verlof of uitbetaling.
+				Het IKB is 16,5% van je bruto maandsalaris en kan je bijvoorbeeld gebruiken voor extra verlof of uitbetaling.
 				<a href="https://www.p-direkt.nl/informatie-rijkspersoneel-2020/financien/salaris/individueel-keuzebudget-ikb" target="_blank" rel="noopener">Meer info</a>
 			</li>
 			<li>
-				<strong>Vierdaagse werkweek:</strong> Bij de Rijksoverheid zijn contracten doorgaans voor 36 uur per week. Werknemers hebben recht op '4x9' werken (4 dagen x 9 uur). Werknemers die 5 dagen werken bouwen compensatieverlof op, waardoor zij in totaal tot wel 11,5 weken per jaar verlof opbouwen.
-				<a href="https://www.p-direkt.nl/informatie-rijkspersoneel-2020/vrije-dagen/vakantie/compensatie-uren/compensatie-uren-opbouwen">Meer info</a>
+				27% van het totale salaris is pensioeninleg bij ABP. Twee-derde van de inleg is van de werkgever; een-derde is een verplichte eigen inleg uit het bruto salaris.
+				<a href="https://www.abp.nl/pensioen-bij-abp/pensioenpremie-en-opbouw">Meer info</a>
 			</li>
 		</ol>
 	</div>
@@ -381,15 +412,11 @@
 		margin-bottom: 0;
 	}
 
-	.footnotes strong {
-		color: #334155;
-	}
-
 	.footnotes a {
 		color: #01689b;
 		text-decoration: none;
 		font-weight: 600;
-		margin-left: 0.5rem;
+		margin-left: 0.25rem;
 	}
 
 	.footnotes a:hover {
