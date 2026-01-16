@@ -104,6 +104,12 @@
 		</div>
 	</div>
 
+	{#if yearlyPreTaxSalary + ikbBudget > 130000}
+		<p class="warning-note">
+			Voor inkomen boven de €137.000 gelden andere regels qua pensioenopbouw. De onderstaande bedragen nemen dat niet mee.
+		</p>
+	{/if}
+
 	<!-- Section 1: Monthly CAO Amount (Highlighted) -->
 	<div class="section">
 		<h2>Maandbedrag CAO Rijk (geschaald naar aantal uren)<sup class="footnote-ref">1</sup></h2>
@@ -162,10 +168,12 @@
 				<span class="label">Totaal:</span>
 				<span class="value">{formatCurrency(totalCompensation)}</span>
 			</div>
-			<div class="result-item total">
-				<span class="label">Beloning geschaald naar volledige werkweek (40 uur):</span>
-				<span class="value">{formatCurrency(totalCompensation * (40 / selectedUren))}</span>
-			</div>
+			{#if selectedUren === 36}
+				<div class="result-item total">
+					<span class="label">Beloning geschaald van 4-daagse naar 5-daagse werkweek:</span>
+					<span class="value">{formatCurrency(totalCompensation * (5 / 4))}</span>
+				</div>
+			{/if}
 		</div>
 	</div>
 
@@ -219,6 +227,17 @@
 		font-size: 1.125rem;
 		line-height: 1.7;
 		max-width: 700px;
+	}
+
+	.warning-note {
+		background: #fef3c7;
+		border: 1px solid #f59e0b;
+		border-radius: 8px;
+		padding: 1rem;
+		margin-bottom: 1.5rem;
+		color: #92400e;
+		font-size: 0.875rem;
+		line-height: 1.5;
 	}
 
 	.input-section {
